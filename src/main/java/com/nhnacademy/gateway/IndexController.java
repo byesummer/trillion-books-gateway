@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class IndexController {
-    @GetMapping(value = {"/index.html","/"})
+    @GetMapping(value = {"/index.html","/index"})
     public String index(){
         return "index/index";
     }

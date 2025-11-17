@@ -3,6 +3,7 @@ spring:
     name: gateway-server
   cloud:
     config:
+      uri: http://127.0.0.1:14017
       discovery:
         enabled: true
         service-id: config-server

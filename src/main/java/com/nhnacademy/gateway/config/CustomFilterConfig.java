@@ -12,23 +12,22 @@
 
 package com.nhnacademy.gateway.config;
 
+import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.server.ServerWebExchange;
+import java.util.UUID;
 
 @Configuration
-@EnableWebFluxSecurity
-public class SecurityConfig {
-
+public class CustomFilterConfig {
     @Bean
-    public SecurityFilterChain springSecurityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable);
-
-
-        return http.build();
+    public GlobalFilter uniqueIdFilter() {
+        return (exchange, chain) -> {
+            String uniqueId = UUID.randomUUID().toString();
+            ServerWebExchange mutatedChange = exchange.mutate()
+                    .request(originalRequest -> originalRequest.header("X-Request-Id", uniqueId))
+                    .build();
+            return chain.filter(mutatedChange);
+        };
     }
-
 }

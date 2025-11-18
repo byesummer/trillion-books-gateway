@@ -17,8 +17,8 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: \
-        http://***REMOVED***:7Z(rQe48hSvbYpdw@127.0.0.1:10419/eureka/,\
-        http://***REMOVED***:7Z(rQe48hSvbYpdw@127.0.0.1:10420/eureka/
+        http://***REMOVED***:***REMOVED***@127.0.0.1:10419/eureka/,\
+        http://***REMOVED***:***REMOVED***@127.0.0.1:10420/eureka/
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${server.port}

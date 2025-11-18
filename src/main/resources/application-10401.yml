@@ -1,2 +1,6 @@
+spring:
+  profiles:
+    active: 10401
+
 server:
   port: 10401

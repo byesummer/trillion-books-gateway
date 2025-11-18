@@ -1,2 +1,6 @@
+spring:
+  profiles:
+    active: 10400
+
 server:
   port: 10400

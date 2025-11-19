@@ -1,0 +1,55 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=IntelliJ IDEA
+
+###
+GET http://localhost:10400/
+Authorization: 1233
+
+
+###
+GET http://localhost:10400/api/order/123
+
+
+###
+GET http://localhost:10400/api/member/login
+
+
+
+###
+### 주문 생성 (회원)
+POST http://127.0.0.1:10400/api/orders/
+Content-Type: application/json
+X-USER-ID: 1
+X-USER-ROLE: MEMBER
+
+{
+  "ordererName": "홍길동",
+  "ordererContact": "010-1234-5678",
+  "deliveryDate": "2024-07-15T10:00:00",
+
+  "receiverName": "김철수",
+  "receiverContact": "010-9876-5432",
+  "receiverAddress": "광주광역시 동구 제봉로 92 (대성학원)",
+  "receiverPostCode": "61455",
+
+  "nonMemberPassword": null,
+
+  "pointUsage": 1000,
+  "orderItems": [
+    {
+      "bookId": 1,
+      "quantity": 2,
+      "price": 500000,
+      "couponId": 1,
+      "packagingId": 2
+    },
+    {
+      "bookId": 2,
+      "quantity": 1,
+      "price": 15000,
+      "couponId": null,
+      "packagingId": 1
+    }
+  ]
+}

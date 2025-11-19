@@ -12,6 +12,7 @@
 
 package com.nhnacademy.gateway.config;
 
+import com.nhnacademy.gateway.filter.JwtAuthenticationFilter;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -20,17 +21,45 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RouteLocatorConfig {
 
+    JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    public RouteLocatorConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
     @Bean
     public RouteLocator myRoute(RouteLocatorBuilder builder) {
 
-        RouteLocator routeLocator = builder.routes().build();
+        JwtAuthenticationFilter.Config memberOnlyConfig = new JwtAuthenticationFilter.Config();
+        memberOnlyConfig.setRequired(true);
 
+        JwtAuthenticationFilter.Config guestAllowedConfig = new JwtAuthenticationFilter.Config();
+        guestAllowedConfig.setRequired(false);
 
         return builder.routes()
+                .route("member-login",
+                        p -> p.path("/api/members/login", "/api/member/register")
+                                .uri("lb://member-service"))
+                .route("member-service",
+                        p -> p.path("/api/members/**")
+                                .filters(f -> f.filter(jwtAuthenticationFilter.apply(memberOnlyConfig)))
+                                .uri("lb://member-service"))
+                .route("book-service",
+                        p -> p.path("/api/books/**")
+                                .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
+                                .uri("lb://book-service"))
                 .route("order-service",
-                        p -> p.path("/api/order").and()
-                                .uri("lb://order-service")
-                )
+                        p -> p.path("/api/orders/**")
+                                .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
+                                .uri("lb://ORDER-SERVICE"))
+                .route("coupon-service",
+                        p -> p.path("/api/coupons/**")
+                               .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
+                                .uri("lb://coupon-service"))
+                .route("cart-service",
+                        p -> p.path("/api/carts/**")
+                                .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
+                                .uri("lb://cart-service"))
                 .build();
     }
 }

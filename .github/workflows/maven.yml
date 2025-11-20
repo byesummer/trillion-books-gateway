@@ -45,7 +45,7 @@ jobs:
         password: ${{ secrets.SSH_PASSWORD }}
         port: ${{ secrets.SSH_PORT }}
         source: "target/*.jar"
-        target: "/home/backend/***REMOVED***/gateway/"
+        target: "/home/backend/***REMOVED***/msa/"
         rm: false
 
     - name: execute shell script
@@ -55,4 +55,4 @@ jobs:
         username: ${{ secrets.SSH_ID }}
         password: ${{ secrets.SSH_PASSWORD }}
         port: ${{ secrets.SSH_PORT }}
-        script: "cd ~/gateway&&pwd&&ls&&sh gateway_dev_run.sh"
+        script: "cd ~/msa&&pwd&&ls&&sh gateway.sh"

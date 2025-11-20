@@ -25,7 +25,7 @@ public class CustomFilterConfig {
         return (exchange, chain) -> {
             String uniqueId = UUID.randomUUID().toString();
             ServerWebExchange mutatedChange = exchange.mutate()
-                    .request(originalRequest -> originalRequest.header("X-Request-Id", uniqueId))
+                    .request(r -> r.header("X-Request-Id", uniqueId))
                     .build();
             return chain.filter(mutatedChange);
         };

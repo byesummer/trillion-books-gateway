@@ -38,7 +38,8 @@ public class RouteLocatorConfig {
 
         return builder.routes()
                 .route("member-login",
-                        p -> p.path("/api/members/login", "/api/member/register")
+                        p -> p.path("/api/auth/**")
+                                .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
                                 .uri("lb://MEMBER-SERVICE"))
                 .route("member-service",
                         p -> p.path("/api/members/**")

@@ -39,15 +39,15 @@ public class RouteLocatorConfig {
         return builder.routes()
                 .route("member-login",
                         p -> p.path("/api/members/login", "/api/member/register")
-                                .uri("lb://member-service"))
+                                .uri("lb://MEMBER-SERVICE"))
                 .route("member-service",
                         p -> p.path("/api/members/**")
                                 .filters(f -> f.filter(jwtAuthenticationFilter.apply(memberOnlyConfig)))
-                                .uri("lb://member-service"))
+                                .uri("lb://MEMBER-SERVICE"))
                 .route("book-service",
                         p -> p.path("/api/books/**")
                                 .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
-                                .uri("lb://book-service"))
+                                .uri("lb://BOOK-SERVICE"))
                 .route("order-service",
                         p -> p.path("/api/orders/**")
                                 .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
@@ -55,11 +55,11 @@ public class RouteLocatorConfig {
                 .route("coupon-service",
                         p -> p.path("/api/coupons/**")
                                .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
-                                .uri("lb://coupon-service"))
+                                .uri("lb://COUPON-SERVICE"))
                 .route("cart-service",
                         p -> p.path("/api/carts/**")
                                 .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
-                                .uri("lb://cart-service"))
+                                .uri("lb://CART-SERVICE"))
                 .build();
     }
 }

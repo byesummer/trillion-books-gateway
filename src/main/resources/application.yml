@@ -10,13 +10,15 @@ spring:
               lower-case-service-id: true
               enabled: true # Eureka에 등록된 서비스 이름으로 라우팅 활성화
 
+server:
+  port: ${SERVER_PORT}
 
 eureka:
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://***REMOVED***:***REMOVED***@127.0.0.1:10419/eureka/,http://***REMOVED***:***REMOVED***@127.0.0.1:10420/eureka/
+      defaultZone: ${EUREKA_URL}
   instance:
     prefer-ip-address: true
     instance-id: ${spring.application.name}:${server.port}
@@ -28,4 +30,4 @@ management:
         include: health, info
 
 jwt:
-  secret: vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalajsfhalsjfhkqjknvazxv
+  secret: ${JWT_SECRET}

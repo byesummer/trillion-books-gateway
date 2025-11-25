@@ -67,12 +67,12 @@ jobs:
         password: ${{ secrets.SSH_PASSWORD }}
         port: ${{ secrets.SSH_PORT }}
 
-        env:
-          REGISTRY: ${{ env.REGISTRY }}
-          REGISTRY_OWNER: ${{ env.REGISTRY_OWNER }}
-          DEPLOY_DIR: ${{ env.DEPLOY_DIR }}
-          # ⭐️ GHCR_TOKEN을 여기서 전달하여 스크립트가 사용하도록 함
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+      env:
+        REGISTRY: ${{ env.REGISTRY }}
+        REGISTRY_OWNER: ${{ env.REGISTRY_OWNER }}
+        DEPLOY_DIR: ${{ env.DEPLOY_DIR }}
+        # ⭐️ GHCR_TOKEN을 여기서 전달하여 스크립트가 사용하도록 함
+        GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
 
         script: |
           SERVICE_NAME_1="gateway-peer1"

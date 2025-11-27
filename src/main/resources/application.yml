@@ -1,6 +1,21 @@
+## Gateway Service의 로컬 설정 파일
+#server:
+#  port: ${SERVER_PORT} # 포트는 실행 시 환경 변수로 주입
+#
+#spring:
+#  # Config Server 연결을 위한 최소한의 설정
+#  config:
+#    import: optional:configserver:
+#  application:
+#    name: gateway-server
+
+
+
+
+
 spring:
   application:
-    name: gateway-server
+    name: gateway
   cloud:
     gateway:
       server:

@@ -1,51 +1,10 @@
-## Gateway Service의 로컬 설정 파일
-#server:
-#  port: ${SERVER_PORT} # 포트는 실행 시 환경 변수로 주입
-#
-#spring:
-#  # Config Server 연결을 위한 최소한의 설정
-#  config:
-#    import: optional:configserver:
-#  application:
-#    name: gateway-server
-
-
-
-
+# Gateway Service의 로컬 설정 파일
+server:
+  port: ${SERVER_PORT} # 포트는 실행 시 환경 변수로 주입
 
 spring:
+  # Config Server 연결을 위한 최소한의 설정
+  config:
+    import: optional:configserver:${CONFIG_SERVER_URI}
   application:
-    name: gateway
-  cloud:
-    gateway:
-      server:
-        webflux:
-          discovery:
-            locator:
-              lower-case-service-id: true
-              enabled: true # Eureka에 등록된 서비스 이름으로 라우팅 활성화
-
-server:
-  port: ${SERVER_PORT}
-
-eureka:
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: ${EUREKA_URL}
-  instance:
-    prefer-ip-address: true
-    instance-id: ${spring.application.name}:${server.port}
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health, info
-logging:
-  level:
-    com.nhnacademy.gateway.GatewayApplication: DEBUG
-
-jwt:
-  secret: ${JWT_SECRET}
+    name: gateway-server

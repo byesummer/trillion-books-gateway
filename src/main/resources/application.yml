@@ -6,6 +6,17 @@ server:
 
 spring:
   config:
-    import: optional:config server:${CONFIG_SERVER_URI}
+    import: configserver:config-server
+  cloud:
+    config:
+      discovery:
+        service-id: config-server
+
   application:
     name: gateway
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_URL}

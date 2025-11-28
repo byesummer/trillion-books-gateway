@@ -6,7 +6,7 @@ server:
 
 spring:
   config:
-    import: configserver:config-server
+    import: configserver:http://config-server
   cloud:
     config:
       discovery:

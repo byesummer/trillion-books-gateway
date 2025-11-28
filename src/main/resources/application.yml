@@ -8,4 +8,4 @@ spring:
   config:
     import: optional:configserver:${CONFIG_SERVER_URI}
   application:
-    name: gateway-server
+    name: gateway

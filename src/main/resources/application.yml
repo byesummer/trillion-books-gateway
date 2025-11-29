@@ -4,19 +4,20 @@ server:
 
   # Config Server 연결을 위한 최소한의 설정
 
+
+#eureka:
+#  client:
+#    register-with-eureka: true
+#    fetch-registry: true
+#    service-url:
+#      defaultZone: ${EUREKA_URL}
+
 spring:
   config:
-    import: configserver:http://config-server
+    import: configserver:http://config-server:10418
   cloud:
     config:
-      discovery:
-        service-id: config-server
-
+      username: ***REMOVED***
+      password: ***REMOVED***
   application:
     name: gateway
-eureka:
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: ${EUREKA_URL}

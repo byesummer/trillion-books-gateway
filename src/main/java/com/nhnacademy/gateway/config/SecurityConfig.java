@@ -31,7 +31,9 @@ public class SecurityConfig {
 
         // 모든 요청에 대한 접근 허용 설정 (필요에 따라 변경)
         http.authorizeExchange(exchanges ->
-                exchanges.anyExchange().permitAll()
+                exchanges.pathMatchers("/api/members/**").hasRole("MEMBER")
+                        .pathMatchers("/api/admin/**").hasRole("ADMIN")
+                        .anyExchange().permitAll()
         );
 
         return http.build();

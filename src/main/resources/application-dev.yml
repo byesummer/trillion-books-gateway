@@ -1,26 +1,2 @@
-spring:
-  application:
-    name: gateway
-  cloud:
-    gateway:
-      server:
-        webflux:
-          discovery:
-            locator:
-              enabled: false
-    config:
-      enabled: false
-
-eureka:
-  client:
-    enabled: false
-
 server:
   port: 10400
-
-logging:
-  level:
-    com.nhnacademy.gateway.GatewayApplication: DEBUG
-
-jwt:
-  secret: ${JWT_SECRET}

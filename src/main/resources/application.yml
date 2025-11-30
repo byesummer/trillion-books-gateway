@@ -1,23 +1,23 @@
-# Gateway Service의 로컬 설정 파일
+# Gateway Service 의 로컬 설정 파일
 server:
-  port: ${SERVER_PORT} # 포트는 실행 시 환경 변수로 주입
+  port: ${SERVER_PORT:10400} # 포트는 실행 시 환경 변수로 주입
 
-  # Config Server 연결을 위한 최소한의 설정
-
-
-#eureka:
-#  client:
-#    register-with-eureka: true
-#    fetch-registry: true
-#    service-url:
-#      defaultZone: ${EUREKA_URL}
-
+# Config Server 연결을 위한 최소한의 설정
 spring:
   config:
-    import: configserver:http://config-server:10418
+    import: configserver:${CONFIG_SERVER_URI:http://localhost:10418}
+  #    import: configserver:http://localhost:10418 # 로컬테스트
+#    import: configserver:http://config-server:10418
   cloud:
     config:
       username: ***REMOVED***
       password: ***REMOVED***
   application:
     name: gateway
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_URL}

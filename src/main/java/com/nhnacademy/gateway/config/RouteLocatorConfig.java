@@ -50,17 +50,17 @@ public class RouteLocatorConfig {
                                 .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
                                 .uri("lb://BOOK-SERVICE"))
                 .route("order-service",
-                        p -> p.path("/api/orders/**")
+                        p -> p.path("/api/orders/**", "/api/carts/**")
                                 .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
                                 .uri("lb://ORDER-SERVICE"))
                 .route("coupon-service",
                         p -> p.path("/api/coupons/**")
                                .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
                                 .uri("lb://COUPON-SERVICE"))
-                .route("cart-service",
-                        p -> p.path("/api/carts/**")
+                .route("search-service",
+                        p -> p.path("/api/search/**")
                                 .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
-                                .uri("lb://CART-SERVICE"))
+                                .uri("lb://SEARCH-SERVICE"))
                 .build();
     }
 }

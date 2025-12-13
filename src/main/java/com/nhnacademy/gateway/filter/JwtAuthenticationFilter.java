@@ -59,26 +59,32 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     public GatewayFilter apply(Config config) {
         return ((exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
+            String authorization = request.getHeaders().getFirst("Authorization");
 
-            if (!request.getHeaders().containsKey("Authorization")) {
-                if (config.isRequired()){
-                    return onError(exchange, "로그인이 필요합니다.", 401);
-                } else {
-                    return chain.filter(exchange);
-                }
+            if (authorization == null || authorization.isBlank()) {
+                if (config.isRequired()) return onError(exchange, "로그인이 필요합니다.", 401);
+                return chain.filter(exchange); // 게스트 허용이면 그냥 통과
             }
 
+            if (!authorization.startsWith("Bearer ")) {
+                if (config.isRequired()) return onError(exchange, "잘못된 인증 형식입니다.", 401);
+                return chain.filter(exchange);
+            }
 
-            String authorization = request.getHeaders().getFirst("Authorization");
             String token = extractJwt(authorization);
             try{
                 Map<String, Object> map = validateJwtTokenAndGetClaims(token);
                 ServerHttpRequest newRequest = request.mutate().
-                        header("X-User-Id", map.get("X-User-Id").toString()).
-                        header("X-User-Role", map.get("X-User-Role").toString()).build();
+                        headers(h -> {
+                            h.remove("X-USER-ID");
+                            h.remove("X-USER-ROLE");
+                            h.set("X-USER-ID", map.get("X-USER-ID").toString());
+                            h.set("X-USER-ROLE", map.get("X-USER-ROLE").toString());
+                        }).build();
                 return chain.filter(exchange.mutate().request(newRequest).build());
             } catch (Exception e) {
-                return onError(exchange, "만료된 토큰 " +e.getMessage(), 401);
+                log.info("만료된 authorization 토큰: {}", e.getMessage());
+                return onError(exchange, "만료된 사용자입니다.", 401);
             }
         });
     }
@@ -92,8 +98,8 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
 
     private Map<String, Object> validateJwtTokenAndGetClaims(String token) {
         Claims claims = jwtParser.parseSignedClaims(token).getPayload();
-        return Map.of("X-User-Id", claims.get("username", String.class),
-                "X-User-Role", claims.get("role", String.class));
+        return Map.of("X-USER-ID", claims.get("userId", Integer.class),
+                "X-USER-ROLE", claims.get("role", String.class));
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, String err, int httpStatusCode) {

@@ -39,27 +39,39 @@ public class RouteLocatorConfig {
         return builder.routes()
                 .route("member-login",
                         p -> p.path("/api/auth/**")
-                                .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
                                 .uri("lb://MEMBER-SERVICE"))
                 .route("member-service",
                         p -> p.path("/api/members/**")
-                                .filters(f -> f.filter(jwtAuthenticationFilter.apply(memberOnlyConfig)))
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(jwtAuthenticationFilter.apply(memberOnlyConfig)))
                                 .uri("lb://MEMBER-SERVICE"))
                 .route("book-service",
                         p -> p.path("/api/books/**")
-                                .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
                                 .uri("lb://BOOK-SERVICE"))
                 .route("order-service",
                         p -> p.path("/api/orders/**", "/api/carts/**")
-                                .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
                                 .uri("lb://ORDER-SERVICE"))
                 .route("coupon-service",
                         p -> p.path("/api/coupons/**")
-                               .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
+                               .filters(f -> f
+                                       .stripPrefix(1)
+                                       .filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
                                 .uri("lb://COUPON-SERVICE"))
                 .route("search-service",
                         p -> p.path("/api/search/**")
-                                .filters(f -> f.filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
                                 .uri("lb://SEARCH-SERVICE"))
                 .build();
     }

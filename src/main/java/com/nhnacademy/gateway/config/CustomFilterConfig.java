@@ -42,7 +42,7 @@ public class CustomFilterConfig {
                         .httpOnly(true)                 // JS로 접근 못하게(권장)
                         .secure(true)                   // HTTPS 환경이면 true 권장 (로컬 HTTP면 false로)
                         .sameSite("Lax")                // 일반적으로 Lax 무난
-                        .maxAge(Duration.ofDays(1))
+                        .maxAge(Duration.ofDays(7))
                         .build();
 
                 exchange.getResponse().addCookie(cookie);

@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RouteLocatorConfig {
 
-    JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     public RouteLocatorConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -30,20 +30,36 @@ public class RouteLocatorConfig {
     @Bean
     public RouteLocator myRoute(RouteLocatorBuilder builder) {
 
+        // 인증 필수
         JwtAuthenticationFilter.Config memberOnlyConfig = new JwtAuthenticationFilter.Config();
         memberOnlyConfig.setRequired(true);
 
+        // 비회원 접근 가능
         JwtAuthenticationFilter.Config guestAllowedConfig = new JwtAuthenticationFilter.Config();
         guestAllowedConfig.setRequired(false);
 
         return builder.routes()
-                .route("member-login",
+                // 로그인, 토큰 재발급 토큰 검사 스킵
+                .route("auth-service",
                         p -> p.path("/api/auth/**")
                                 .filters(f -> f
                                         .stripPrefix(1)
                                         .filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
                                 .uri("lb://MEMBER-SERVICE"))
-                .route("member-service",
+                // 회원가입, 휴면해제, 이메일/ID 찾기 토큰 검사 스킵
+                .route("member-service-public",
+                        p -> p.path(
+                                        "/api/members/signup",
+                                        "/api/members/dormant/**",
+                                        "/api/members/emails/**",
+                                        "/api/members/findEmail"
+                                )
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
+                                .uri("lb://MEMBER-SERVICE"))
+                // 그 외 모든 기능은 토큰 검사
+                .route("member-service-secure",
                         p -> p.path("/api/members/**")
                                 .filters(f -> f
                                         .stripPrefix(1)
@@ -55,6 +71,7 @@ public class RouteLocatorConfig {
                                         .stripPrefix(1)
                                         .filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
                                 .uri("lb://BOOK-SERVICE"))
+                // 비회원 장바구니/주문 가능 시 false, 회원 전용이면 true 변경
                 .route("order-service",
                         p -> p.path("/api/orders/**", "/api/carts/**")
                                 .filters(f -> f
@@ -63,9 +80,9 @@ public class RouteLocatorConfig {
                                 .uri("lb://ORDER-SERVICE"))
                 .route("coupon-service",
                         p -> p.path("/api/coupons/**")
-                               .filters(f -> f
-                                       .stripPrefix(1)
-                                       .filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(jwtAuthenticationFilter.apply(guestAllowedConfig)))
                                 .uri("lb://COUPON-SERVICE"))
                 .route("search-service",
                         p -> p.path("/api/search/**")

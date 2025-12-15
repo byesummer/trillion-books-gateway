@@ -30,10 +30,9 @@ public class SecurityConfig {
         http.securityContextRepository(NoOpServerSecurityContextRepository.getInstance());
 
         // 모든 요청에 대한 접근 허용 설정 (필요에 따라 변경)
+        // 인증/인가 로직은 JwtAuthenticationFilter에서 수행
         http.authorizeExchange(exchanges ->
-                exchanges.pathMatchers("/api/members/**").hasRole("MEMBER")
-                        .pathMatchers("/api/admin/**").hasRole("ADMIN")
-                        .anyExchange().permitAll()
+                exchanges.anyExchange().permitAll()
         );
 
         return http.build();

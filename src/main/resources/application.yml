@@ -1,25 +1,25 @@
-## Config Server 연결을 위한 최소한의 설정
-#spring:
-#  config:
-#    import: configserver:${CONFIG_SERVER_URI:http://localhost:10418}
-#  cloud:
-#    config:
-#      username: ***REMOVED***
-#      password: ***REMOVED***
-#  application:
-#    name: gateway
-#
-#eureka:
-#  client:
-#    register-with-eureka: true
-#    fetch-registry: true
-#    service-url:
-#      defaultZone: ${EUREKA_URL}
-#
-#uri:
-#  service:
-#    member: member-service
-#    book: book-service
-#    order: order-service
-#    coupon: coupon-service
-#    search: search-service
+# Config Server 연결을 위한 최소한의 설정
+spring:
+  config:
+    import: configserver:${CONFIG_SERVER_URI:http://localhost:10418}
+  cloud:
+    config:
+      username: ***REMOVED***
+      password: ***REMOVED***
+  application:
+    name: gateway
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_URL}
+
+uri:
+  service:
+    member: member-service
+    book: book-service
+    order: order-service
+    coupon: coupon-service
+    search: search-service

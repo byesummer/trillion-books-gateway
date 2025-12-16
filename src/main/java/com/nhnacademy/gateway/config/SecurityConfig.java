@@ -14,26 +14,27 @@ package com.nhnacademy.gateway.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.web.server.SecurityWebFilterChain;
-import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
-    public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
-        http.csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
-            .formLogin(ServerHttpSecurity.FormLoginSpec::disable);
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http.securityContextRepository(NoOpServerSecurityContextRepository.getInstance());
+        http.csrf(csrf -> csrf.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .formLogin(formLogin -> formLogin.disable());
 
-        // 모든 요청에 대한 접근 허용 설정 (필요에 따라 변경)
-        // 인증/인가 로직은 JwtAuthenticationFilter에서 수행
-        http.authorizeExchange(exchanges ->
-                exchanges.anyExchange().permitAll()
-        );
+        http.sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        http.authorizeHttpRequests(auth ->
+                auth.anyRequest().permitAll());
 
         return http.build();
     }

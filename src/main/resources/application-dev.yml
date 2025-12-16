@@ -25,10 +25,14 @@ eureka:
   client:
     enabled: false
 
-jwt:
-  secret: ${JWT_SECRET}
-
 logging:
   level:
     com.nhnacademy.gateway.GatewayApplication: DEBUG
 
+uri:
+  service:
+    member: http://localhost:10403
+    book: http://localhost:10413
+    order: http://localhost:10407
+    coupon: http://localhost:10409
+    search: http://localhost:10410

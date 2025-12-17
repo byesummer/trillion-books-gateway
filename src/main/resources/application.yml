@@ -18,8 +18,9 @@ eureka:
 
 uri:
   service:
-    member: member-service
-    book: book-service
-    order: order-service
-    coupon: coupon-service
-    search: search-service
+    auth: lb://auth-service
+    member: lb://member-service
+    book: lb://book-service
+    order: lb://order-service
+    coupon: lb://coupon-service
+    search: lb://search-service

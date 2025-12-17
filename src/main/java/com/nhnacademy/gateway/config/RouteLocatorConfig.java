@@ -12,6 +12,7 @@
 
 package com.nhnacademy.gateway.config;
 
+import com.nhnacademy.gateway.filter.AuthorizationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
@@ -20,6 +21,9 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RouteLocatorConfig {
+
+    @Value("${uri.service.auth}")
+    private String authServiceId;
 
     @Value("${uri.service.member}")
     private String memberServiceId;
@@ -36,17 +40,30 @@ public class RouteLocatorConfig {
     @Value("${uri.service.search}")
     private String searchServiceId;
 
+    private final AuthorizationFilter authorizationFilter;
+
+    public RouteLocatorConfig(AuthorizationFilter authorizationFilter) {
+        this.authorizationFilter = authorizationFilter;
+    }
+
     @Bean
     public RouteLocator myRoute(RouteLocatorBuilder builder) {
 
+        // 회원 전용 (토큰 반드시 필요)
+        AuthorizationFilter.Config memberOnlyConfig = new AuthorizationFilter.Config();
+        memberOnlyConfig.setRequired(true);
+
+        // 회원, 비회원 모두 가능 (토큰 있으면 인증하고 없으면 패스하기)
+        AuthorizationFilter.Config guestAllowedConfig = new AuthorizationFilter.Config();
+        guestAllowedConfig.setRequired(false);
 
         return builder.routes()
-                // 로그인, 토큰 재발급 토큰 검사 스킵
                 .route("auth-service",
                         p -> p.path("/api/auth/**")
-                                .filters(f -> f.stripPrefix(1))
-                                .uri("lb://" + memberServiceId))
-                // 회원가입, 휴면해제, 이메일/ID 찾기 토큰 검사 스킵
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(guestAllowedConfig)))
+                                .uri(authServiceId))
                 .route("member-service-public",
                         p -> p.path(
                                         "/api/members/signup",
@@ -54,30 +71,40 @@ public class RouteLocatorConfig {
                                         "/api/members/emails/**",
                                         "/api/members/findEmail"
                                 )
-                                .filters(f -> f.stripPrefix(1))
-                                .uri("lb://" + memberServiceId))
-                // 그 외 모든 기능은 토큰 검사
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(guestAllowedConfig)))
+                                .uri(memberServiceId))
                 .route("member-service-secure",
                         p -> p.path("/api/members/**")
-                                .filters(f -> f.stripPrefix(1))
-                                .uri("lb://" + memberServiceId))
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(memberOnlyConfig)))
+                                .uri(memberServiceId))
                 .route("book-service",
                         p -> p.path("/api/books/**")
-                                .filters(f -> f.stripPrefix(1))
-                                .uri("lb://" + bookServiceId))
-                // 비회원 장바구니/주문 가능 시 false, 회원 전용이면 true 변경
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(guestAllowedConfig)))
+                                .uri(bookServiceId))
                 .route("order-service",
                         p -> p.path("/api/orders/**", "/api/carts/**")
-                                .filters(f -> f.stripPrefix(1))
-                                .uri("lb://" + orderServiceId))
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(guestAllowedConfig)))
+                                .uri(orderServiceId))
                 .route("coupon-service",
                         p -> p.path("/api/coupons/**")
-                                .filters(f -> f.stripPrefix(1))
-                                .uri("lb://" + couponServiceId))
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(memberOnlyConfig)))
+                                .uri(couponServiceId))
                 .route("search-service",
                         p -> p.path("/api/search/**")
-                                .filters(f -> f.stripPrefix(1))
-                                .uri("lb://" + searchServiceId))
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(guestAllowedConfig)))
+                                .uri(searchServiceId))
                 .build();
     }
 }

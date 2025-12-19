@@ -1,21 +1,22 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
     <property name="LOG_PATH" value="/app/logs"/>
-    <property name="APP_NAME" value="user-service"/>
-    <property name="VERSION" value="${spring.profiles.active:-unknown}"/>
+    <property name="APP_NAME" value="${LOG_FILENAME:-user-service}"/>
 
     <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/${APP_NAME}.log</file>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
                 <timestamp/>
-                <version/> <logLevel/>
-                <appenderName/>
-                <contextName/> <threadName/>
+                <logLevel/>
+                <threadName/>
                 <loggerName/>
-                <message/> <mdc/> <stackTrace/>
+                <pattern>
+                    <pattern>{"message":"%msg"}</pattern>
+                </pattern>
+                <mdc/>
+                <stackTrace/>
             </providers>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -24,15 +25,7 @@
         </rollingPolicy>
     </appender>
 
-    <springProfile name="dev">
-        <root level="INFO">
-            <appender-ref ref="ROLLING_FILE"/>
-        </root>
-    </springProfile>
-
-    <springProfile name="!dev">
-        <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
-        </root>
-    </springProfile>
+    <root level="INFO">
+        <appender-ref ref="ROLLING_FILE"/>
+    </root>
 </configuration>

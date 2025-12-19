@@ -14,8 +14,8 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: ${EUREKA_URL}
-
+      defaultZone: ${EUREKA_URL:http://***REMOVED***:***REMOVED***@localhost:8761/eureka}
+##---------------------------------------------------------------------------------------------------------
 uri:
   service:
     auth: lb://auth-service
@@ -24,3 +24,16 @@ uri:
     order: lb://order-service
     coupon: lb://coupon-service
     search: lb://search-service
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0 # 모든 로그를 찍는 설정이라 추후 조정 필요
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"

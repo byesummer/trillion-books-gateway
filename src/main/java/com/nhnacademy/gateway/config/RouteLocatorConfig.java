@@ -59,7 +59,7 @@ public class RouteLocatorConfig {
 
         return builder.routes()
                 .route("auth-service",
-                        p -> p.path("/api/auth/**")
+                        p -> p.path("/api/auth/**", "/api/login/**")
                                 .filters(f -> f
                                         .stripPrefix(1)
                                         .filter(authorizationFilter.apply(guestAllowedConfig)))
@@ -69,7 +69,8 @@ public class RouteLocatorConfig {
                                         "/api/members/signup",
                                         "/api/members/dormant/**",
                                         "/api/members/emails/**",
-                                        "/api/members/findEmail"
+                                        "/api/members/findEmail",
+                                        "/api/members/password/**"
                                 )
                                 .filters(f -> f
                                         .stripPrefix(1)

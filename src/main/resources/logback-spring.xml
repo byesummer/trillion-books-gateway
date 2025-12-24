@@ -2,9 +2,10 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
     <property name="LOG_PATH" value="/app/logs"/>
-    <property name="APP_NAME" value="${LOG_FILENAME:-user-service}"/>
+    <property name="APP_NAME" value="${LOG_FILENAME:-app}"/>
 
-    <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!-- 1) 기존 앱 로그 -->
+    <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/${APP_NAME}.log</file>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
@@ -12,9 +13,7 @@
                 <logLevel/>
                 <threadName/>
                 <loggerName/>
-                <pattern>
-                    <pattern>{"message":"%msg"}</pattern>
-                </pattern>
+                <message/>
                 <mdc/>
                 <stackTrace/>
             </providers>
@@ -25,7 +24,26 @@
         </rollingPolicy>
     </appender>
 
+    <!-- 2) HTTP access 전용 로그 -->
+    <appender name="ACCESS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${APP_NAME}-access.log</file>
+        <!-- AccessLogFilter가 이미 JSON 문자열로 찍으므로 encoder는 그냥 원문 -->
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${APP_NAME}-access-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <!-- ACCESS_LOG 로거는 additivity false로 해서 root로 전파 안 시킴 -->
+    <logger name="ACCESS_LOG" level="INFO" additivity="false">
+        <appender-ref ref="ACCESS_FILE"/>
+    </logger>
+
     <root level="INFO">
-        <appender-ref ref="ROLLING_FILE"/>
+        <appender-ref ref="APP_FILE"/>
+        <appender-ref ref="CONSOLE"/>
     </root>
 </configuration>

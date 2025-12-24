@@ -41,7 +41,8 @@ public class AuthorizationFilter extends AbstractGatewayFilterFactory<Authorizat
             // Authorization 헤더 확인
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 if (config.isRequired()) {
-                    return onError(exchange, "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
+                    log.info("Auth Gateway: Missing Authorization Header");
+                    return onError(exchange, HttpStatus.UNAUTHORIZED);
                 }
                 // 토큰이 필수가 아니고 없으면 그냥 통과 (비회원)
                 return chain.filter(exchange);
@@ -70,21 +71,21 @@ public class AuthorizationFilter extends AbstractGatewayFilterFactory<Authorizat
                         return chain.filter(exchange.mutate().request(newRequest).build());
                     })
                     .onErrorResume(e -> {
-                        log.error("Token Validation Failed: {}", e.getMessage());
                         // 필수 요청은 검증 실패하면 401
                         if (config.isRequired()) {
-                            return onError(exchange, "Invalid Token", HttpStatus.UNAUTHORIZED);
+                            log.warn("Token Validation Failed: {}", e.getMessage());
+                            return onError(exchange, HttpStatus.UNAUTHORIZED);
                         }
                         // 비회원 가능 경로면 토큰이 틀려도 상관없을듯
+                        log.debug("Optional token validation failed, proceeding as guest: {}", e.getMessage());
                         return chain.filter(exchange);
                     });
         };
     }
 
-    private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus httpStatus) {
+    private Mono<Void> onError(ServerWebExchange exchange, HttpStatus httpStatus) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(httpStatus);
-        log.error("Gateway Auth Error: {}", err);
         return response.setComplete();
     }
 }

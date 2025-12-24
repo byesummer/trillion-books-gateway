@@ -83,7 +83,7 @@ public class RouteLocatorConfig {
                                         .filter(authorizationFilter.apply(memberOnlyConfig)))
                                 .uri(memberServiceId))
                 .route("book-service",
-                        p -> p.path("/api/books/**")
+                        p -> p.path("/api/books/**","/api/admin/**")
                                 .filters(f -> f
                                         .stripPrefix(1)
                                         .filter(authorizationFilter.apply(guestAllowedConfig)))

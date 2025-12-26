@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.net.InetSocketAddress;
 import java.time.Instant;
 
 @Component
@@ -35,7 +36,6 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
 
         long startNs = System.nanoTime();
 
-        // traceId/spanId 확보: MDC 우선, 없으면 헤더에서 복구
         String traceId = firstNonBlank(
                 MDC.get("traceId"),
                 MDC.get("trace_id"),
@@ -50,13 +50,10 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
                 req.getHeaders().getFirst("spanId")
         );
 
-        // client ip (X-Forwarded-For 우선)
         String clientIp = firstNonBlank(
                 firstIp(req.getHeaders().getFirst("X-Forwarded-For")),
                 req.getHeaders().getFirst("X-Real-IP"),
-                exchange.getRequest().getRemoteAddress() != null
-                        ? exchange.getRequest().getRemoteAddress().getAddress().getHostAddress()
-                        : ""
+                getSafeRemoteIp(req.getRemoteAddress()) // 안전한 헬퍼 메서드 사용
         );
 
         String method = req.getMethod() != null ? req.getMethod().name() : "UNKNOWN";
@@ -67,8 +64,6 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
                     int status = res.getStatusCode() != null ? res.getStatusCode().value() : 0;
                     long tookMs = (System.nanoTime() - startNs) / 1_000_000;
 
-                    // JSON 한 줄 (필요 최소)
-                    // querystring/headers/body 안 찍음
                     String json = String.format(
                             "{\"@timestamp\":\"%s\",\"type\":\"http_access\",\"method\":\"%s\",\"path\":\"%s\",\"status\":%d,\"duration_ms\":%d,\"client_ip\":\"%s\",\"traceId\":\"%s\",\"spanId\":\"%s\"}",
                             Instant.now(),
@@ -83,6 +78,17 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
 
                     ACCESS_LOG.info(json);
                 });
+    }
+
+    private String getSafeRemoteIp(InetSocketAddress remoteAddress) {
+        if (remoteAddress == null) {
+            return "";
+        }
+        if (remoteAddress.getAddress() != null) {
+            return remoteAddress.getAddress().getHostAddress();
+        }
+        // IP가 Unresolved 상태라 null이면 호스트 이름이라도 반환
+        return remoteAddress.getHostString();
     }
 
     private boolean shouldSkip(String path) {
@@ -101,15 +107,10 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
 
     private static String firstIp(String xff) {
         if (xff == null || xff.isBlank()) return "";
-        // "client, proxy1, proxy2" 형태라 첫번째가 원본일 가능성이 큼
         String[] parts = xff.split(",");
         return parts.length > 0 ? parts[0].trim() : xff.trim();
     }
 
-    /**
-     * W3C traceparent: "00-<trace-id>-<span-id>-<flags>"
-     * trace-id는 32 hex
-     */
     private static String extractTraceIdFromTraceParent(String traceparent) {
         if (traceparent == null) return "";
         String[] parts = traceparent.split("-");
@@ -119,7 +120,6 @@ public class AccessLogFilter implements GlobalFilter, Ordered {
         return "";
     }
 
-    // JSON-safe 최소 이스케이프
     private static String escape(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\")

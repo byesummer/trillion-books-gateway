@@ -10,6 +10,9 @@
     <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/${APP_NAME}.log</file>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <globalCustomFields>
+                {"service":"${spring.application.name:-unknown}"}
+            </globalCustomFields>
             <providers>
                 <timestamp/>
                 <logLevel/>

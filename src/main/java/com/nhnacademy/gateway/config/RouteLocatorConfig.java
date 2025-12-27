@@ -62,6 +62,7 @@ public class RouteLocatorConfig {
                         p -> p.path("/api/auth/**", "/api/login/**", "/api/oauth2/**")
                                 .filters(f -> f
                                         .stripPrefix(1)
+                                        .preserveHostHeader()
                                         .filter(authorizationFilter.apply(guestAllowedConfig)))
                                 .uri(authServiceId))
                 .route("member-service-public",

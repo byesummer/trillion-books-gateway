@@ -53,7 +53,7 @@ public class AuthorizationFilter extends AbstractGatewayFilterFactory<Authorizat
             // Auth Service에 검증 요청 (비동기로)
             return webClientBuilder.build()
                     .post()
-                    .uri("lb://auth-service/api/auth/validate") // Auth 서비스 검증 API 호출
+                    .uri("lb://auth-service/auth/validate") // Auth 서비스 검증 API 호출
                     .header(HttpHeaders.AUTHORIZATION, token) // 토큰 그대로 전달
                     .retrieve()
                     .toBodilessEntity() // Body는 필요 없음 (헤더만 확인)

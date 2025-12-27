@@ -58,6 +58,11 @@ public class RouteLocatorConfig {
         guestAllowedConfig.setRequired(false);
 
         return builder.routes()
+                .route("oauth2-login-service",
+                        p -> p.path("/api/login/oauth2/**")
+                                .filters(f -> f
+                                        .filter(authorizationFilter.apply(guestAllowedConfig)))
+                                .uri(authServiceId))
                 .route("auth-service",
                         p -> p.path("/api/auth/**", "/api/login/**", "/api/oauth2/**")
                                 .filters(f -> f

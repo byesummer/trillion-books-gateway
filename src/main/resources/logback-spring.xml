@@ -1,22 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
 
     <property name="LOG_PATH" value="/app/logs"/>
     <property name="APP_NAME" value="${LOG_FILENAME:-app}"/>
 
     <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/${APP_NAME}.log</file>
-        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <globalCustomFields>
-                {"service":"${spring.application.name:-unknown}"}
-            </globalCustomFields>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"trillion-service":"${LOG_FILENAME:-unknown}"}</customFields>
             <providers>
                 <timestamp/>
                 <logLevel/>
-                <threadName/>
                 <loggerName/>
                 <message/>
                 <mdc/>

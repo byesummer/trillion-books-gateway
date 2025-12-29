@@ -16,11 +16,3 @@ eureka:
     service-url:
       defaultZone: ${EUREKA_URL:http://***REMOVED***:***REMOVED***@localhost:8761/eureka}
 ##---------------------------------------------------------------------------------------------------------
-uri:
-  service:
-    auth: lb://auth-service
-    member: lb://member-service
-    book: lb://book-service
-    order: lb://order-service
-    coupon: lb://coupon-service
-    search: lb://search-service

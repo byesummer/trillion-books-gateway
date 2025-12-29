@@ -28,6 +28,15 @@ spring:
 
 #uri:
 #  service:
+#    auth: lb://auth-service
+#    member: lb://member-service
+#    book: lb://book-service
+#    order: lb://order-service
+#    coupon: lb://coupon-service
+#    search: lb://search-service
+
+#uri:
+#  service:
 #    auth: http://localhost:10401
 #    member: http://localhost:10403
 #    book: http://localhost:10413

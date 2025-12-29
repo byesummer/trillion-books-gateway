@@ -19,12 +19,7 @@
                         {"trillion-service":"${LOG_FILENAME:-unknown}"}
                     </pattern>
                 </pattern>
-                <mdc>
-                    <includeMdcKeyName>traceId</includeMdcKeyName>
-                    <includeMdcKeyName>spanId</includeMdcKeyName>
-                    <includeMdcKeyName>trace_id</includeMdcKeyName>
-                    <includeMdcKeyName>span_id</includeMdcKeyName>
-                </mdc>
+                <mdc/>
                 <stackTrace>
                     <fieldName>stack_trace</fieldName>
                 </stackTrace>

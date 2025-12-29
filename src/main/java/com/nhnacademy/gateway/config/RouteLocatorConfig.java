@@ -102,7 +102,7 @@ public class RouteLocatorConfig {
                                         .filter(authorizationFilter.apply(guestAllowedConfig)))
                                 .uri(orderServiceId))
                 .route("coupon-service",
-                        p -> p.path("/api/coupons/**")
+                        p -> p.path("/api/coupons/**","/api/admin/coupons/**","/api/admin/coupon-policies/**","api/book-coupons/**","api/member-coupons/**")
                                 .filters(f -> f
                                         .stripPrefix(1)
                                         .filter(authorizationFilter.apply(memberOnlyConfig)))

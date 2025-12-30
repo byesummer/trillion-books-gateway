@@ -108,7 +108,7 @@ public class RouteLocatorConfig {
                                         .filter(authorizationFilter.apply(memberOnlyConfig)))
                                 .uri(couponServiceId))
                 .route("search-service",
-                        p -> p.path("/api/search/**")
+                        p -> p.path("/api/search/**", "api/review-summary/**")
                                 .filters(f -> f
                                         .stripPrefix(1)
                                         .filter(authorizationFilter.apply(guestAllowedConfig)))

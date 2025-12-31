@@ -84,29 +84,33 @@ public class RouteLocatorConfig {
                                         .stripPrefix(1)
                                         .filter(authorizationFilter.apply(memberOnlyConfig)))
                                 .uri(memberServiceId))
-                .route("book-service",
-                        p -> p.path("/api/books/**","/api/admin/**")
-                                .filters(f -> f
-                                        .stripPrefix(1)
-                                        .filter(authorizationFilter.apply(guestAllowedConfig)))
-                                .uri(bookServiceId))
-                .route("order-service",
-                        p -> p.path(
-                                "/api/orders/**",
-                                "/api/order-items/**",
-                                "/api/carts/**",
-                                "/api/payments/**"
-                                )
-                                .filters(f -> f
-                                        .stripPrefix(1)
-                                        .filter(authorizationFilter.apply(guestAllowedConfig)))
-                                .uri(orderServiceId))
+
+                // 구체적인 경로(/api/admin/coupons/**)를 먼저 체크
                 .route("coupon-service",
                         p -> p.path("/api/coupons/**","/api/admin/coupons/**","/api/admin/coupon-policies/**","/api/book-coupons/**","/api/member-coupons/**")
                                 .filters(f -> f
                                         .stripPrefix(1)
                                         .filter(authorizationFilter.apply(memberOnlyConfig)))
                                 .uri(couponServiceId))
+
+                .route("book-service",
+                        p -> p.path("/api/books/**","/api/admin/**") // 이제 위에서 쿠폰 관련이 아니면 여기서 처리됩니다.
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(guestAllowedConfig)))
+                                .uri(bookServiceId))
+                .route("order-service",
+                        p -> p.path(
+                                        "/api/orders/**",
+                                        "/api/order-items/**",
+                                        "/api/carts/**",
+                                        "/api/payments/**"
+                                )
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(guestAllowedConfig)))
+                                .uri(orderServiceId))
+
                 .route("search-service",
                         p -> p.path("/api/search/**", "/api/review-summary/**")
                                 .filters(f -> f

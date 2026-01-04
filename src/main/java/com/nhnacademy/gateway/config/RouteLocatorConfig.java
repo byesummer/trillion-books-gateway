@@ -100,6 +100,12 @@ public class RouteLocatorConfig {
                                         .filter(authorizationFilter.apply(guestAllowedConfig)))
                                 .uri(bookServiceId))
                 .route("order-service",
+                        p -> p.path("/api/carts/merge")
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(memberOnlyConfig)))
+                                .uri(orderServiceId))
+                .route("order-service",
                         p -> p.path(
                                         "/api/orders/**",
                                         "/api/order-items/**",

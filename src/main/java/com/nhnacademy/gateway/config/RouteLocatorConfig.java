@@ -99,7 +99,7 @@ public class RouteLocatorConfig {
                                         .stripPrefix(1)
                                         .filter(authorizationFilter.apply(guestAllowedConfig)))
                                 .uri(bookServiceId))
-                .route("order-service",
+                .route("cart-merge-service",
                         p -> p.path("/api/carts/merge")
                                 .filters(f -> f
                                         .stripPrefix(1)

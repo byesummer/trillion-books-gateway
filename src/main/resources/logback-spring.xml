@@ -47,8 +47,12 @@
         <appender-ref ref="ACCESS_FILE"/>
     </logger>
 
-    <root level="INFO">
-        <appender-ref ref="APP_FILE"/>
-        <appender-ref ref="CONSOLE"/>
-    </root>
+    <springProfile name="!dev">
+        <springProfile name="!local">
+            <root level="INFO">
+                <appender-ref ref="APP_FILE"/>
+                <appender-ref ref="CONSOLE"/>
+            </root>
+        </springProfile>
+    </springProfile>
 </configuration>

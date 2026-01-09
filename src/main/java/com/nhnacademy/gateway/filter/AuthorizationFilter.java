@@ -73,7 +73,6 @@ public class AuthorizationFilter extends AbstractGatewayFilterFactory<Authorizat
                     .onErrorResume(e -> {
                         // 필수 요청은 검증 실패하면 401
                         if (config.isRequired()) {
-                            log.warn("Token Validation Failed: {}", e.getMessage());
                             return onError(exchange, HttpStatus.UNAUTHORIZED);
                         }
                         // 비회원 가능 경로면 토큰이 틀려도 상관없을듯

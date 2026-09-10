@@ -1,12 +1,5 @@
 server:
   port: 10400
-#  forward-headers-strategy: framework
-#  ssl:
-#    enabled: true
-#    key-store: classpath:bootsecurity.p12
-#    key-store-password: ${SSL_PW} #__SSL_PASSWORD__
-#    key-store-type: PKCS12
-#    key-alias: bootsecurity
 
 spring:
   application:
@@ -21,29 +14,9 @@ spring:
               enabled: true
     config:
       enabled: false
-### 유레카 서버 등록 필요없으면 아래 해제하세요 + appliction.yml 전체주석
-#eureka:
-#  client:
-#    enabled: false
 
-#uri:
-#  service:
-#    auth: lb://auth-service
-#    member: lb://member-service
-#    book: lb://book-service
-#    order: lb://order-service
-#    coupon: lb://coupon-service
-#    search: lb://search-service
-
-#uri:
-#  service:
-#    auth: http://localhost:10401
-#    member: http://localhost:10403
-#    book: http://localhost:10413
-#    order: http://localhost:10407
-#    coupon: http://localhost:10409
-#    search: http://localhost:10410
-
-logging:
-  level:
-    com.nhnacademy.gateway.GatewayApplication: DEBUG
+# 라우팅 대상(uri.service.*)은 Config Server에서 주입.
+# 로컬 단독 실행 시 아래를 프로파일/오버라이드로 지정:
+#   eureka.client.enabled: false  (+ application.yml eureka 블록 무력화)
+#   uri.service.auth: http://localhost:10401  등 정적 URI
+#   또는 lb://auth-service 유지 (eureka 필요)

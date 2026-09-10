@@ -1,58 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <!-- Spring Boot 기본 패턴/변환기와 CONSOLE 앱펜더 (base.xml 과 달리 파일 앱펜더는 포함 안 함) -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
-    <property name="LOG_PATH" value="/app/logs"/>
-    <property name="APP_NAME" value="${LOG_FILENAME:-app}"/>
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="gateway"/>
 
-    <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/${APP_NAME}.log</file>
-        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-            <providers>
-                <timestamp/>
-                <logLevel/>
-                <loggerName/>
-                <message/>
-                <pattern>
+    <!-- 기본(dev·local·test): 콘솔만. ACCESS_LOG 도 root 상속으로 콘솔 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <springProfile name="!dev &amp; !local">
+        <property name="LOG_PATH" value="${LOG_PATH:-logs}"/>
+        <property name="INSTANCE_ID" value="${HOSTNAME:-unknown}"/>
+
+        <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_PATH}/${APP_NAME}-${INSTANCE_ID}.log</file>
+            <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                <providers>
+                    <timestamp/>
+                    <logLevel/>
+                    <loggerName/>
+                    <threadName/>
+                    <message/>
+                    <mdc/>
+                    <stackTrace>
+                        <fieldName>stack_trace</fieldName>
+                    </stackTrace>
                     <pattern>
-                        {"trillion-service":"${LOG_FILENAME:-unknown}"}
+                        <pattern>{"service":"${APP_NAME}","instance":"${INSTANCE_ID}"}</pattern>
                     </pattern>
-                </pattern>
-                <mdc/>
-                <stackTrace>
-                    <fieldName>stack_trace</fieldName>
-                </stackTrace>
-            </providers>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/${APP_NAME}-%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>7</maxHistory>
-        </rollingPolicy>
-    </appender>
+                </providers>
+            </encoder>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_PATH}/${APP_NAME}-${INSTANCE_ID}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+                <maxFileSize>50MB</maxFileSize>
+                <maxHistory>14</maxHistory>
+                <totalSizeCap>2GB</totalSizeCap>
+            </rollingPolicy>
+        </appender>
 
-    <!-- HTTP access 전용 로그 (파일) -->
-    <appender name="ACCESS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/${APP_NAME}-access.log</file>
-        <encoder>
-            <pattern>%msg%n</pattern>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/${APP_NAME}-access-%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>7</maxHistory>
-        </rollingPolicy>
-    </appender>
+        <appender name="ACCESS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_PATH}/${APP_NAME}-access.log</file>
+            <encoder>
+                <pattern>%msg%n</pattern>
+            </encoder>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_PATH}/${APP_NAME}-access.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+                <maxFileSize>50MB</maxFileSize>
+                <maxHistory>14</maxHistory>
+                <totalSizeCap>1GB</totalSizeCap>
+            </rollingPolicy>
+        </appender>
 
-    <logger name="ACCESS_LOG" level="INFO" additivity="false">
-        <appender-ref ref="ACCESS_FILE"/>
-    </logger>
+        <logger name="ACCESS_LOG" level="INFO" additivity="false">
+            <appender-ref ref="ACCESS_FILE"/>
+        </logger>
 
-    <springProfile name="!dev">
-        <springProfile name="!local">
-            <root level="INFO">
-                <appender-ref ref="APP_FILE"/>
-                <appender-ref ref="CONSOLE"/>
-            </root>
-        </springProfile>
+        <root>
+            <appender-ref ref="JSON_FILE"/>
+        </root>
     </springProfile>
+
 </configuration>

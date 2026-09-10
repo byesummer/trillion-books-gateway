@@ -1,0 +1,29 @@
+server:
+  port: 0
+
+spring:
+  cloud:
+    config:
+      enabled: false
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: false
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+# RouteLocatorConfig 의 @Value 해석용 더미
+uri:
+  service:
+    auth: http://localhost:10401
+    member: http://localhost:10403
+    book: http://localhost:10413
+    order: http://localhost:10407
+    coupon: http://localhost:10409
+    search: http://localhost:10410

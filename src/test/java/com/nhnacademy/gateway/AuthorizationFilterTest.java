@@ -129,6 +129,57 @@ class AuthorizationFilterTest {
     }
 
     @Test
+    @DisplayName("MEMBER role이면 ADMIN 라우트는 403")
+    void memberRoleThenAdminRouteForbidden() {
+        AuthorizationFilter filter = filterWithFakeAuthResponse(
+                ClientResponse.create(HttpStatus.OK)
+                        .header("X-Member-Id", "1")
+                        .header("X-Member-Role", "MEMBER")
+                        .build());
+
+        MockServerHttpRequest request = MockServerHttpRequest.get("/api/admin/books/1")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer valid-token")
+                .build();
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+
+        AuthorizationFilter.Config config = new AuthorizationFilter.Config();
+        config.setRequired(true);
+        config.setRequiredRole("ADMIN");
+
+        filter.apply(config).filter(exchange, chain).block();
+
+        assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        verify(chain, never()).filter(any());
+    }
+
+    @Test
+    @DisplayName("ADMIN role이면 통과")
+    void adminRoleThenPass() {
+        AuthorizationFilter filter = filterWithFakeAuthResponse(
+                ClientResponse.create(HttpStatus.OK)
+                        .header("X-Member-Id", "1")
+                        .header("X-Member-Role", "ADMIN")
+                        .build());
+
+        MockServerHttpRequest request = MockServerHttpRequest.get("/api/admin/books/1")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer valid-token")
+                .build();
+        MockServerWebExchange exchange = MockServerWebExchange.from(request);
+
+        AuthorizationFilter.Config config = new AuthorizationFilter.Config();
+        config.setRequired(true);
+        config.setRequiredRole("ADMIN");
+
+        filter.apply(config).filter(exchange, chain).block();
+
+        ArgumentCaptor<ServerWebExchange> captor = ArgumentCaptor.forClass(ServerWebExchange.class);
+        verify(chain).filter(captor.capture());
+        ServerHttpRequest forwarded = captor.getValue().getRequest();
+        assertThat(forwarded.getHeaders().getFirst("X-Member-Id")).isEqualTo("1");
+        assertThat(forwarded.getHeaders().getFirst("X-Member-Role")).isEqualTo("ADMIN");
+    }
+
+    @Test
     @DisplayName("검증 실패시 optional이면 통과하되 클라 헤더는 제거")
     void unAuthorizedAndIsOptionalThenDeleteClientHeader() {
         AuthorizationFilter filter = filterWithFakeAuthResponse(

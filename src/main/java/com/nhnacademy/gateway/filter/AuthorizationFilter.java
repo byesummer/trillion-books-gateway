@@ -31,6 +31,7 @@ public class AuthorizationFilter extends AbstractGatewayFilterFactory<Authorizat
         // true: 토큰 필수 (없거나 유효하지 않으면 401)
         // false: 토큰 선택 (있으면 검증해서 헤더 주입, 없거나 실패하면 비회원으로 통과)
         private boolean required;
+        private String requiredRole;
     }
 
     @Override
@@ -78,6 +79,12 @@ public class AuthorizationFilter extends AbstractGatewayFilterFactory<Authorizat
                         HttpHeaders headers = response.getHeaders();
                         String memberId = headers.getFirst("X-Member-Id");
                         String memberRole = headers.getFirst("X-Member-Role");
+
+                        // Role 검증
+                        if (config.getRequiredRole() != null &&
+                                !config.getRequiredRole().equals(memberRole)){
+                            return onError(ex, HttpStatus.FORBIDDEN);
+                        }
 
                         ServerHttpRequest newRequest = cleaned.mutate()
                                 .header("X-Member-Id", memberId)

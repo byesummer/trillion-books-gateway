@@ -1,15 +1,3 @@
-/*
- * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- * + Copyright 2025. NHN Academy Corp. All rights reserved.
- * + * While every precaution has been taken in the preparation of this resource,  assumes no
- * + responsibility for errors or omissions, or for damages resulting from the use of the information
- * + contained herein
- * + No part of this resource may be reproduced, stored in a retrieval system, or transmitted, in any
- * + form or by any means, electronic, mechanical, photocopying, recording, or otherwise, without the
- * + prior written permission.
- * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- */
-
 package com.nhnacademy.gateway.config;
 
 import com.nhnacademy.gateway.filter.AuthorizationFilter;
@@ -53,18 +41,33 @@ public class RouteLocatorConfig {
         AuthorizationFilter.Config memberOnlyConfig = new AuthorizationFilter.Config();
         memberOnlyConfig.setRequired(true);
 
+        // 관리자 전용
+        AuthorizationFilter.Config adminOnlyConfig = new AuthorizationFilter.Config();
+        adminOnlyConfig.setRequired(true);
+        adminOnlyConfig.setRequiredRole("ADMIN");
+
         // 회원, 비회원 모두 가능 (토큰 있으면 인증하고 없으면 패스하기)
         AuthorizationFilter.Config guestAllowedConfig = new AuthorizationFilter.Config();
         guestAllowedConfig.setRequired(false);
 
         return builder.routes()
-                .route("auth-service",
+                // 인증 서비스
+                .route("auth-service-public",
                         p -> p.path("/api/auth/**", "/api/login/**", "/api/oauth2/**")
                                 .filters(f -> f
                                         .stripPrefix(1)
                                         .preserveHostHeader()
                                         .filter(authorizationFilter.apply(guestAllowedConfig)))
                                 .uri(authServiceId))
+
+                // 회원 서비스
+                .route("member-service-admin",
+                        p ->p.path(
+                                "/api/members/admin/**")
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(adminOnlyConfig)))
+                                        .uri(memberServiceId))
                 .route("member-service-public",
                         p -> p.path(
                                         "/api/members/signup",
@@ -78,34 +81,61 @@ public class RouteLocatorConfig {
                                         .stripPrefix(1)
                                         .filter(authorizationFilter.apply(guestAllowedConfig)))
                                 .uri(memberServiceId))
-                .route("member-service-secure",
+                .route("member-service-private",
                         p -> p.path("/api/members/**")
                                 .filters(f -> f
                                         .stripPrefix(1)
                                         .filter(authorizationFilter.apply(memberOnlyConfig)))
                                 .uri(memberServiceId))
 
-                // 구체적인 경로(/api/admin/coupons/**)를 먼저 체크
-                .route("coupon-service",
-                        p -> p.path("/api/coupons/**","/api/admin/coupons/**","/api/admin/coupon-policies/**","/api/book-coupons/**","/api/member-coupons/**")
+                // 쿠폰 서비스
+                .route("coupon-service-admin",
+                        p -> p.path("/api/coupons/admin/**")
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(adminOnlyConfig)))
+                                .uri(couponServiceId))
+                .route("coupon-service-private",
+                        p -> p.path("/api/coupons/**","/api/book-coupons/**","/api/member-coupons/**")
                                 .filters(f -> f
                                         .stripPrefix(1)
                                         .filter(authorizationFilter.apply(memberOnlyConfig)))
                                 .uri(couponServiceId))
 
-                .route("book-service",
-                        p -> p.path("/api/books/**","/api/admin/**") // 이제 위에서 쿠폰 관련이 아니면 여기서 처리됩니다.
+                // 도서 서비스
+                .route("book-service-public",
+                        p -> p.path("/api/books/**")
                                 .filters(f -> f
                                         .stripPrefix(1)
                                         .filter(authorizationFilter.apply(guestAllowedConfig)))
                                 .uri(bookServiceId))
-                .route("cart-merge-service",
+
+                // 장바구니 서비스
+                .route("cart-service-private",
                         p -> p.path("/api/carts/merge")
                                 .filters(f -> f
                                         .stripPrefix(1)
                                         .filter(authorizationFilter.apply(memberOnlyConfig)))
                                 .uri(orderServiceId))
-                .route("order-service",
+
+                // 주문 서비스
+                .route("order-service-admin",
+                        p -> p.path(
+                                        "/api/orders/admin/**"
+                                )
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(adminOnlyConfig)))
+                                .uri(orderServiceId))
+                .route("order-service-public",
+                        p -> p.path(
+                                        "/api/orders/non-members/**"
+                                )
+                                .filters(f -> f
+                                        .stripPrefix(1)
+                                        .filter(authorizationFilter.apply(guestAllowedConfig)))
+                                .uri(orderServiceId))
+                .route("order-service-private",
                         p -> p.path(
                                         "/api/orders/**",
                                         "/api/order-items/**",
@@ -114,10 +144,11 @@ public class RouteLocatorConfig {
                                 )
                                 .filters(f -> f
                                         .stripPrefix(1)
-                                        .filter(authorizationFilter.apply(guestAllowedConfig)))
+                                        .filter(authorizationFilter.apply(memberOnlyConfig)))
                                 .uri(orderServiceId))
 
-                .route("search-service",
+                // 검색 서비스
+                .route("search-service-public",
                         p -> p.path("/api/search/**", "/api/review-summary/**")
                                 .filters(f -> f
                                         .stripPrefix(1)

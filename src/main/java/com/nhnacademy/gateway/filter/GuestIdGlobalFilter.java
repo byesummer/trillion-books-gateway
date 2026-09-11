@@ -17,19 +17,18 @@ public class GuestIdGlobalFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
-
         HttpCookie guestCookie = request.getCookies().getFirst("guestId");
 
-        if (guestCookie != null) {
-            String guestId = guestCookie.getValue();
+        ServerHttpRequest cleaned = request.mutate()
+                .headers(h -> {
+                    h.remove("X-Guest-Id");
+                    if (guestCookie != null) {
+                        h.set("X-Guest-Id", guestCookie.getValue());
+                    }
+                })
+                .build();
 
-            ServerHttpRequest newRequest = request.mutate()
-                    .header("X-Guest-Id", guestId)
-                    .build();
-
-            return chain.filter(exchange.mutate().request(newRequest).build());
-        }
-        return chain.filter(exchange);
+        return chain.filter(exchange.mutate().request(cleaned).build());
     }
 
     @Override

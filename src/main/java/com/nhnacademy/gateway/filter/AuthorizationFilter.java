@@ -38,14 +38,30 @@ public class AuthorizationFilter extends AbstractGatewayFilterFactory<Authorizat
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
+            if (request.getHeaders().containsKey("X-Member-Id")
+                    || request.getHeaders().containsKey("X-Member-Role")) {
+                log.warn("Spoofed identity headers from client, stripping. path={}",
+                        request.getPath());
+            }
+
+            // 신뢰 헤더 초기화
+            ServerHttpRequest cleaned = request.mutate()
+                    .headers(h -> {
+                        h.remove("X-Member-Id");
+                        h.remove("X-Member-Role");
+                    })
+                    .build();
+
+            ServerWebExchange ex = exchange.mutate().request(cleaned).build();
+
             // Authorization 헤더 확인
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 if (config.isRequired()) {
                     log.info("Auth Gateway: Missing Authorization Header");
-                    return onError(exchange, HttpStatus.UNAUTHORIZED);
+                    return onError(ex, HttpStatus.UNAUTHORIZED);
                 }
-                // 토큰이 필수가 아니고 없으면 그냥 통과 (비회원)
-                return chain.filter(exchange);
+                // 비회원은 회원 헤더 없이 통과
+                return chain.filter(ex);
             }
 
             String token = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
@@ -58,26 +74,25 @@ public class AuthorizationFilter extends AbstractGatewayFilterFactory<Authorizat
                     .retrieve()
                     .toBodilessEntity() // Body는 필요 없음 (헤더만 확인)
                     .flatMap(response -> {
-                        // 검증 성공 시 auth service가 준 헤더 꺼내서 원본 request에 이식
+                        // 검증 성공 시 auth service가 준 헤더 꺼내서 cleaned에 이식
                         HttpHeaders headers = response.getHeaders();
                         String memberId = headers.getFirst("X-Member-Id");
                         String memberRole = headers.getFirst("X-Member-Role");
 
-                        ServerHttpRequest newRequest = request.mutate()
+                        ServerHttpRequest newRequest = cleaned.mutate()
                                 .header("X-Member-Id", memberId)
                                 .header("X-Member-Role", memberRole)
                                 .build();
 
-                        return chain.filter(exchange.mutate().request(newRequest).build());
+                        return chain.filter(ex.mutate().request(newRequest).build());
                     })
                     .onErrorResume(e -> {
                         // 필수 요청은 검증 실패하면 401
                         if (config.isRequired()) {
-                            return onError(exchange, HttpStatus.UNAUTHORIZED);
+                            return onError(ex, HttpStatus.UNAUTHORIZED);
                         }
-                        // 비회원 가능 경로면 토큰이 틀려도 상관없을듯
                         log.debug("Optional token validation failed, proceeding as guest: {}", e.getMessage());
-                        return chain.filter(exchange);
+                        return chain.filter(ex);
                     });
         };
     }

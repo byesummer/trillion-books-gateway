@@ -1,29 +1,28 @@
 package com.nhnacademy.gateway.filter;
 
+import com.nhnacademy.gateway.auth.JwtValidator;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class AuthorizationFilter extends AbstractGatewayFilterFactory<AuthorizationFilter.Config> {
 
-    private final WebClient.Builder webClientBuilder;
-
-    public AuthorizationFilter(WebClient.Builder webClientBuilder) {
-        super(Config.class);
-        this.webClientBuilder = webClientBuilder;
-    }
+    private final JwtValidator jwtValidator;
+    private final ReactiveStringRedisTemplate redisTemplate;
 
     @Getter
     @Setter
@@ -39,12 +38,6 @@ public class AuthorizationFilter extends AbstractGatewayFilterFactory<Authorizat
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
 
-            if (request.getHeaders().containsKey("X-Member-Id")
-                    || request.getHeaders().containsKey("X-Member-Role")) {
-                log.warn("Spoofed identity headers from client, stripping. path={}",
-                        request.getPath());
-            }
-
             // 신뢰 헤더 초기화
             ServerHttpRequest cleaned = request.mutate()
                     .headers(h -> {
@@ -55,58 +48,59 @@ public class AuthorizationFilter extends AbstractGatewayFilterFactory<Authorizat
 
             ServerWebExchange ex = exchange.mutate().request(cleaned).build();
 
+            if (request.getHeaders().containsKey("X-Member-Id")
+                    || request.getHeaders().containsKey("X-Member-Role")) {
+                log.warn("Spoofed identity headers from client, stripping. path={}",
+                        request.getPath());
+            }
+
             // Authorization 헤더 확인
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 if (config.isRequired()) {
-                    log.info("Auth Gateway: Missing Authorization Header");
-                    return onError(ex, HttpStatus.UNAUTHORIZED);
+                    return onError(ex, HttpStatus.UNAUTHORIZED, null);
                 }
                 // 비회원은 회원 헤더 없이 통과
                 return chain.filter(ex);
             }
 
             String token = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+            String rawToken = token.startsWith("Bearer ") ? token.substring(7) : token;
 
-            // Auth Service에 검증 요청 (비동기로)
-            return webClientBuilder.build()
-                    .post()
-                    .uri("lb://auth-service/auth/validate") // Auth 서비스 검증 API 호출
-                    .header(HttpHeaders.AUTHORIZATION, token) // 토큰 그대로 전달
-                    .retrieve()
-                    .toBodilessEntity() // Body는 필요 없음 (헤더만 확인)
-                    .flatMap(response -> {
-                        // 검증 성공 시 auth service가 준 헤더 꺼내서 cleaned에 이식
-                        HttpHeaders headers = response.getHeaders();
-                        String memberId = headers.getFirst("X-Member-Id");
-                        String memberRole = headers.getFirst("X-Member-Role");
+            JwtValidator.ValidationResult result = jwtValidator.validateAccessToken(rawToken);
+            if (!result.valid()) {
+                if (config.isRequired()) {
+                    return onError(ex, HttpStatus.UNAUTHORIZED, result.failureReason());
+                }
+                return chain.filter(ex);
+            }
 
-                        // Role 검증
-                        if (config.getRequiredRole() != null &&
-                                !config.getRequiredRole().equals(memberRole)){
-                            return onError(ex, HttpStatus.FORBIDDEN);
+            return redisTemplate.hasKey("BL:" + rawToken)
+                    .flatMap(blacklisted -> {
+                        if (Boolean.TRUE.equals(blacklisted)) {
+                            if (config.isRequired()) {
+                                return onError(ex, HttpStatus.UNAUTHORIZED, "token_blacklisted");
+                            }
+                            return chain.filter(ex);
                         }
-
+                        if (config.getRequiredRole() != null
+                                && !config.getRequiredRole().equals(result.role())) {
+                            return onError(ex, HttpStatus.FORBIDDEN, null);
+                        }
                         ServerHttpRequest newRequest = cleaned.mutate()
-                                .header("X-Member-Id", memberId)
-                                .header("X-Member-Role", memberRole)
+                                .header("X-Member-Id", String.valueOf(result.memberId()))
+                                .header("X-Member-Role", result.role())
                                 .build();
-
                         return chain.filter(ex.mutate().request(newRequest).build());
-                    })
-                    .onErrorResume(e -> {
-                        // 필수 요청은 검증 실패하면 401
-                        if (config.isRequired()) {
-                            return onError(ex, HttpStatus.UNAUTHORIZED);
-                        }
-                        log.debug("Optional token validation failed, proceeding as guest: {}", e.getMessage());
-                        return chain.filter(ex);
                     });
         };
     }
 
-    private Mono<Void> onError(ServerWebExchange exchange, HttpStatus httpStatus) {
+    private Mono<Void> onError(ServerWebExchange exchange, HttpStatus httpStatus, String authError) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(httpStatus);
+        if(authError != null){
+            response.getHeaders().add("X-Auth-Error",authError);
+        }
         return response.setComplete();
     }
 }

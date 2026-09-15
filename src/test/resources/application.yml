@@ -2,6 +2,8 @@ server:
   port: 0
 
 spring:
+  jwt:
+    secret: test-jwt-secret-please-change-0123456789abcdef
   cloud:
     config:
       enabled: false
